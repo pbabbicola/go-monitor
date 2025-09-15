@@ -1,0 +1,7 @@
+[
+    {
+        "url": "https://duckduckgo.com"
+        "regexp": "duck"
+        "interval-seconds": 5
+    }
+]
