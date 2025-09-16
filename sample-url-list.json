@@ -2,6 +2,11 @@
     {
         "url": "https://duckduckgo.com",
         "regexp": "duck",
-        "interval-seconds": 5
+        "interval_seconds": 2
+    },
+    {
+        "url": "https://paula.codes",
+        "regexp": "duck",
+        "interval_seconds": 1
     }
 ]

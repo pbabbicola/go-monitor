@@ -11,7 +11,7 @@ import (
 type SiteElement struct {
 	URL             string         `json:"url"`
 	Regexp          *regexp.Regexp `json:"regexp"`
-	IntervalSeconds int            `json:"interval-seconds"`
+	IntervalSeconds int            `json:"interval_seconds"`
 }
 
 // Parse reads a filename, parses the json, and returns, if successful, a []SiteElement configuration.

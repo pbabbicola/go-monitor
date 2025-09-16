@@ -1,0 +1,131 @@
+package monitor_test
+
+import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"testing/synctest"
+	"time"
+
+	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/config"
+	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
+	"github.com/stretchr/testify/assert"
+)
+
+type mockedMonitorer struct {
+	monitored int
+	err       error
+}
+
+func NewMockedMonitorer(err error) *mockedMonitorer {
+	return &mockedMonitorer{
+		monitored: 0,
+		err:       err,
+	}
+}
+
+func (m *mockedMonitorer) monitor(context.Context, config.SiteElement) error {
+	m.monitored++
+
+	return m.err
+}
+
+func TestTicks(t *testing.T) {
+	tests := []struct {
+		name string // Description of this test case
+		// Named input parameters for target function.
+		website   config.SiteElement
+		monitorer *mockedMonitorer
+		// Other needed parameters
+		expectedAmountOfCalls int
+		timeout               time.Duration
+	}{
+		{
+			name: "test ticks of random url",
+			website: config.SiteElement{
+				URL:             "test-url",
+				Regexp:          nil,
+				IntervalSeconds: 1,
+			},
+			monitorer:             NewMockedMonitorer(nil),
+			expectedAmountOfCalls: 5,
+			timeout:               5 * time.Second,
+		},
+		{
+			name: "test ticks that are cancelled before the monitoring has time to run",
+			website: config.SiteElement{
+				URL:             "test-url",
+				Regexp:          nil,
+				IntervalSeconds: 5,
+			},
+			monitorer:             NewMockedMonitorer(nil),
+			expectedAmountOfCalls: 0,
+			timeout:               1 * time.Second,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ctx, cancel := context.WithTimeout(context.Background(), tt.timeout)
+				defer cancel()
+
+				monitor.Ticks(ctx, tt.website, tt.monitorer.monitor)
+
+				assert.Equal(t, tt.expectedAmountOfCalls, tt.monitorer.monitored)
+			})
+		})
+	}
+}
+
+type mockedHandler struct {
+	statusCode int
+}
+
+func NewMockedHandler(statusCode int) *mockedHandler {
+	return &mockedHandler{
+		statusCode: statusCode,
+	}
+}
+
+func (s *mockedHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(s.statusCode)
+}
+
+func TestDefaultMonitorer_Monitor(t *testing.T) {
+	tests := []struct {
+		name string // Description of this test case
+		// Named input parameters for target function.
+		website config.SiteElement
+		// Other needed parameters
+		wantErr     bool
+		fakeHandler *mockedHandler
+	}{
+		{
+			name: "happy path",
+			website: config.SiteElement{
+				URL: "https://example.org",
+			},
+			wantErr:     false,
+			fakeHandler: NewMockedHandler(http.StatusOK),
+		},
+		{
+			name: "invalid url",
+			website: config.SiteElement{
+				URL: "example",
+			},
+			wantErr:     true,
+			fakeHandler: NewMockedHandler(http.StatusOK),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fakeServer := httptest.NewServer(tt.fakeHandler)
+			defer fakeServer.Close()
+			m := monitor.NewDefaultMonitorer(fakeServer.Client())
+			err := m.Monitor(context.Background(), tt.website)
+
+			assert.Truef(t, err != nil == tt.wantErr, "wanted err to be %v, but got error %v", tt.wantErr, err)
+		})
+	}
+}
