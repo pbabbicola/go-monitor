@@ -9,10 +9,11 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/config"
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	"github.com/spf13/cobra"
+
+	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/config"
+	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
 )
 
 // The website monitor should perform the checks periodically and collect the request timestamp,

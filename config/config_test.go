@@ -4,8 +4,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/config"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/config"
 )
 
 func TestParse(t *testing.T) {

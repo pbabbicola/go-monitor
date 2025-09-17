@@ -1,0 +1,159 @@
+version: "2"
+linters:
+  default: none
+  enable:
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - copyloopvar
+    - durationcheck
+    - err113
+    - errcheck
+    - errname
+    - errorlint
+    - fatcontext
+    - gocheckcompilerdirectives
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - godot
+    - gomoddirectives
+    - goprintffuncname
+    - gosmopolitan
+    - govet
+    - iface
+    - ineffassign
+    - loggercheck
+    - mirror
+    - mnd
+    - musttag
+    - nakedret
+    - nilerr
+    - nilnil
+    - noctx
+    - nosprintfhostport
+    - perfsprint
+    - predeclared
+    - revive
+    - sqlclosecheck
+    - staticcheck
+    - tagliatelle
+    - unconvert
+    - unused
+    - usestdlibvars
+    - whitespace
+    - wrapcheck
+    - wsl_v5
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
+    gocritic:
+      enabled-checks:
+        - importShadow
+        - whyNoLint
+    gomoddirectives:
+      replace-local: true
+    govet:
+      enable:
+        - shadow
+        - nilness
+        - unusedwrite
+        - waitgroup
+    revive:
+      confidence: 0.6
+      severity: warning
+      rules:
+        - name: atomic
+        - name: bare-return
+        - name: blank-imports
+        - name: call-to-gc
+        - name: confusing-naming
+        - name: confusing-results
+        - name: constant-logical-expr
+        - name: context-as-argument
+          arguments:
+            - allowTypesBefore: "*testing.T"
+          severity: error
+        - name: context-keys-type
+        - name: deep-exit
+        - name: defer
+        - name: dot-imports
+          severity: error
+        - name: duplicated-imports
+        - name: empty-block
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+          severity: error
+        - name: errorf
+        - name: exported
+          arguments:
+            - sayRepetitiveInsteadOfStutters
+          severity: error
+        - name: get-return
+        - name: if-return
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: package-comments
+        - name: range
+        - name: range-val-in-closure
+        - name: range-val-address
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: string-of-int
+        - name: struct-tag
+        - name: superfluous-else
+        - name: time-equal
+        - name: time-naming
+          severity: error
+        - name: var-naming
+        - name: var-declaration
+        - name: unconditional-recursion
+        - name: unexported-return
+        - name: unnecessary-stmt
+        - name: unreachable-code
+          severity: error
+        - name: unused-parameter
+        - name: unused-receiver
+        - name: use-any
+        - name: useless-break
+        - name: waitgroup-by-value
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+        use-field-name: false
+    whitespace:
+      multi-if: true
+      multi-func: false
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: false
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: (.+)\.go$
+        text: declaration of "(err|ctx)" shadows declaration at
+      - path: (.+)\.go$
+        text: legacy
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+formatters:
+  enable:
+    - gofumpt
+  settings:
+    gofumpt:
+      extra-rules: true
+      module-path: "github.com/[REDACTED]-recruiting/go-20250912-pbabbicola"
