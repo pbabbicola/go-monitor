@@ -8,9 +8,10 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/config"
 	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
-	"github.com/stretchr/testify/assert"
 )
 
 type mockedMonitorer struct {
@@ -122,6 +123,7 @@ func TestDefaultMonitorer_Monitor(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fakeServer := httptest.NewServer(tt.fakeHandler)
 			defer fakeServer.Close()
+
 			m := monitor.NewDefaultMonitorer(fakeServer.Client())
 			err := m.Monitor(context.Background(), tt.website)
 
