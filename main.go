@@ -12,6 +12,7 @@ import (
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 
 	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/config"
+	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/consumers/log"
 	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
 )
 
@@ -43,13 +44,18 @@ func run(fileURL string) error {
 	}()
 
 	client := cleanhttp.DefaultClient() // This sets sensible defaults for the client.
+	messageQueue := make(chan monitor.Message)
 
 	var wg sync.WaitGroup
 	for _, website := range cfg { // values don't need to be copied over for correct concurrency since go 1.21
 		wg.Go(func() {
-			monitor.Ticks(ctx, website, monitor.NewDefaultMonitorer(client).Monitor)
+			monitor.Ticks(ctx, website, monitor.NewDefaultMonitorer(client, messageQueue).Monitor)
 		})
 	}
+
+	wg.Go(func() {
+		log.Consume(ctx, messageQueue)
+	})
 
 	wg.Wait()
 

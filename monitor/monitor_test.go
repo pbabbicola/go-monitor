@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -124,10 +125,39 @@ func TestDefaultMonitorer_Monitor(t *testing.T) {
 			fakeServer := httptest.NewServer(tt.fakeHandler)
 			defer fakeServer.Close()
 
-			m := monitor.NewDefaultMonitorer(fakeServer.Client())
-			err := m.Monitor(context.Background(), tt.website)
+			messageQueue := make(chan monitor.Message)
 
-			assert.Truef(t, err != nil == tt.wantErr, "wanted err to be %v, but got error %v", tt.wantErr, err)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			m := monitor.NewDefaultMonitorer(fakeServer.Client(), messageQueue)
+
+			var wg sync.WaitGroup
+
+			wg.Go(func() {
+				err := m.Monitor(ctx, tt.website)
+
+				cancel()
+
+				assert.Truef(t, err != nil == tt.wantErr, "wanted err to be %v, but got error %v", tt.wantErr, err)
+			})
+
+			wg.Go(func() {
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case msg := <-messageQueue:
+						if !tt.wantErr {
+							assert.Equal(t, tt.website.URL, msg.URL)
+						}
+
+						return
+					}
+				}
+			})
+
+			wg.Wait()
 		})
 	}
 }

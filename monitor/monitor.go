@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"time"
@@ -38,13 +39,15 @@ func Ticks(ctx context.Context, website config.SiteElement, monitorer Monitorer)
 
 // DefaultMonitorer is the currently implemented monitorer. It makes a request and prints the results.
 type DefaultMonitorer struct {
-	client *http.Client
+	client       *http.Client
+	messageQueue chan Message
 }
 
 // NewDefaultMonitorer creates a new default monitorer with an http client.
-func NewDefaultMonitorer(client *http.Client) *DefaultMonitorer {
+func NewDefaultMonitorer(client *http.Client, messageQueue chan Message) *DefaultMonitorer {
 	return &DefaultMonitorer{
-		client: client,
+		client:       client,
+		messageQueue: messageQueue,
 	}
 }
 
@@ -52,6 +55,17 @@ var (
 	ErrNilMonitorer = errors.New("monitorer is nil")
 	ErrNilClient    = errors.New("client is nil")
 )
+
+// Message is a monitoring message. It adds all the possible data that a monitor may want to show.
+// Here I could have created two message types, and two queues, but I am running out of time.
+type Message struct {
+	URL           string
+	Duration      time.Duration
+	Timestamp     time.Time
+	StatusCode    int
+	RegexpMatches bool
+	Err           error
+}
 
 // Monitor monitors one website and prints in debug the monitoring information.
 func (m *DefaultMonitorer) Monitor(ctx context.Context, website config.SiteElement) error {
@@ -78,7 +92,25 @@ func (m *DefaultMonitorer) Monitor(ctx context.Context, website config.SiteEleme
 
 	duration := time.Since(start)
 
-	slog.DebugContext(ctx, "Request done", slog.String("url", website.URL), slog.Duration("duration", duration), slog.Int("status_code", resp.StatusCode))
+	responseBody, err := io.ReadAll(resp.Body) // if status == 200?
+	if err != nil {
+		return fmt.Errorf("reading response body for %v: %w", website, err)
+	}
+
+	var regexpMatches bool
+
+	if website.Regexp != nil {
+		website.Regexp.Match(responseBody)
+	}
+
+	m.messageQueue <- Message{
+		URL:           website.URL,
+		Duration:      duration,
+		Timestamp:     start,
+		StatusCode:    resp.StatusCode,
+		RegexpMatches: regexpMatches,
+		Err:           nil,
+	}
 
 	return nil
 }
