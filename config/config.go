@@ -3,9 +3,31 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"regexp"
+
+	"github.com/caarlos0/env/v11"
 )
+
+// TODO: Add tests (running out of time) and use FileURL as an actual url.
+// EnvConfig keeps the configuration parsed from the environment by [ParseEnv].
+type EnvConfig struct {
+	FileURL  string     `env:"FILE_URL" envDefault:"sample-big.json"`
+	LogLevel slog.Level `env:"LOG_LEVEL" envDefault:"debug"`
+}
+
+// ParseEnv parses the configuration from the environment. If it fails, it returns a wrapped error from the env package.
+func ParseEnv() (*EnvConfig, error) {
+	envConfig := &EnvConfig{}
+
+	err := env.Parse(envConfig)
+	if err != nil {
+		return nil, fmt.Errorf("parsing environment config: %w", err)
+	}
+
+	return envConfig, nil
+}
 
 // SiteElement is a unit of configuration that describes the URL we need to monitor, the regexp that we want to check for, and the interval in which we should do so.
 type SiteElement struct {

@@ -11,4 +11,4 @@ COPY --from=build /go/bin/gomonitor /go/bin/gomonitor
 COPY ./sample-big.json ./sample-big.json
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-CMD [ "/go/bin/gomonitor", "sample-big.json" ]
+CMD [ "/go/bin/gomonitor" ]

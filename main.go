@@ -10,7 +10,6 @@ import (
 	"syscall"
 
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
-	"github.com/spf13/cobra"
 
 	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/config"
 	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
@@ -23,8 +22,8 @@ import (
 // the regexp on a per-URL basis. The monitored URLs can be anything found online. In case the
 // check fails the details of the failure should be logged into the database.
 
-func run(_ *cobra.Command, args []string) error {
-	cfg, err := config.Parse(args[0]) // Guaranteed to exist by cobra.ExactArgs.
+func run(fileURL string) error {
+	cfg, err := config.Parse(fileURL)
 	if err != nil {
 		return fmt.Errorf("parsing configuration: %w", err)
 	}
@@ -58,17 +57,14 @@ func run(_ *cobra.Command, args []string) error {
 }
 
 func main() {
-	slog.SetLogLoggerLevel(slog.LevelDebug)
-
-	rootCmd := &cobra.Command{
-		Use:   "gomonitor configfile.json",
-		Short: "Go Monitor checks a list of websites periodically.",
-		Long:  "Go Monitor checks a list of websites periodically.",
-		Args:  cobra.ExactArgs(1), // Only allows one argument.
-		RunE:  run,
+	envConfig, err := config.ParseEnv()
+	if err != nil {
+		panic(err)
 	}
 
-	err := rootCmd.Execute()
+	slog.SetLogLoggerLevel(envConfig.LogLevel)
+
+	err = run(envConfig.FileURL)
 	if err != nil {
 		os.Exit(1)
 	}
