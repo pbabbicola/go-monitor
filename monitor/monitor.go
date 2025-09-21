@@ -77,40 +77,47 @@ func (m *DefaultMonitorer) Monitor(ctx context.Context, website config.SiteEleme
 		return ErrNilClient
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, website.URL, http.NoBody)
-	if err != nil {
-		return fmt.Errorf("creating request to %v: %w", website, err)
+	start := time.Now() // theoretically I should do this after creating the request but I've written myself into a corner since I would have to go back and figure out how to modify the logs table, as I set start time as part of the primary key.
+
+	// We build the message so we can send partial results as logs if we don't have the complete result.
+	message := Message{
+		URL:       website.URL,
+		Timestamp: start,
 	}
 
-	start := time.Now()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, website.URL, http.NoBody)
+	if err != nil {
+		message.Err = fmt.Errorf("creating request to %v: %w", website, err)
+		m.messageQueue <- message
+
+		return nil
+	}
 
 	resp, err := m.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("making request to %v: %w", website, err)
+		message.Err = fmt.Errorf("making request to %v: %w", website, err)
+		m.messageQueue <- message
+
+		return nil
 	}
 	defer resp.Body.Close()
 
-	duration := time.Since(start)
+	message.Duration = time.Since(start)
+	message.StatusCode = resp.StatusCode
 
-	responseBody, err := io.ReadAll(resp.Body) // if status == 200?
+	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("reading response body for %v: %w", website, err)
-	}
+		message.Err = fmt.Errorf("reading response body for %v: %w", website, err)
+		m.messageQueue <- message
 
-	var regexpMatches bool
+		return nil
+	}
 
 	if website.Regexp != nil {
-		website.Regexp.Match(responseBody)
+		message.RegexpMatches = website.Regexp.Match(responseBody)
 	}
 
-	m.messageQueue <- Message{
-		URL:           website.URL,
-		Duration:      duration,
-		Timestamp:     start,
-		StatusCode:    resp.StatusCode,
-		RegexpMatches: regexpMatches,
-		Err:           nil,
-	}
+	m.messageQueue <- message
 
 	return nil
 }

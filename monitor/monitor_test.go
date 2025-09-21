@@ -94,6 +94,7 @@ func (s *mockedHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(s.statusCode)
 }
 
+// TODO: Test other cases.
 func TestDefaultMonitorer_Monitor(t *testing.T) {
 	tests := []struct {
 		name string // Description of this test case
@@ -109,14 +110,6 @@ func TestDefaultMonitorer_Monitor(t *testing.T) {
 				URL: "https://example.org",
 			},
 			wantErr:     false,
-			fakeHandler: NewMockedHandler(http.StatusOK),
-		},
-		{
-			name: "invalid url",
-			website: config.SiteElement{
-				URL: "example",
-			},
-			wantErr:     true,
 			fakeHandler: NewMockedHandler(http.StatusOK),
 		},
 	}
@@ -158,6 +151,39 @@ func TestDefaultMonitorer_Monitor(t *testing.T) {
 			})
 
 			wg.Wait()
+		})
+	}
+}
+
+func TestDefaultMonitorer_Monitor_Errors(t *testing.T) {
+	tests := []struct {
+		name      string
+		website   config.SiteElement
+		wantErr   error
+		monitorer *monitor.DefaultMonitorer
+	}{
+		{
+			name: "nil monitorer",
+			website: config.SiteElement{
+				URL: "https://example.org",
+			},
+			wantErr:   monitor.ErrNilMonitorer,
+			monitorer: nil,
+		},
+		{
+			name: "nil client",
+			website: config.SiteElement{
+				URL: "https://example.org",
+			},
+			wantErr:   monitor.ErrNilClient,
+			monitorer: &monitor.DefaultMonitorer{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.monitorer.Monitor(context.Background(), tt.website)
+
+			assert.ErrorIs(t, err, tt.wantErr)
 		})
 	}
 }
