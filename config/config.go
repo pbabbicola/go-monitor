@@ -13,8 +13,10 @@ import (
 // TODO: Add tests (running out of time) and use FileURL as an actual url.
 // EnvConfig keeps the configuration parsed from the environment by [ParseEnv].
 type EnvConfig struct {
-	FileURL  string     `env:"FILE_URL" envDefault:"sample-big.json"`
-	LogLevel slog.Level `env:"LOG_LEVEL" envDefault:"debug"`
+	FileURL     string     `env:"FILE_URL" envDefault:"sample-big.json"`
+	LogLevel    slog.Level `env:"LOG_LEVEL" envDefault:"Debug"`
+	DatabaseURL string     `env:"DATABASE_URL,required"`
+	BatchSize   int        `env:"BATCH_SIZE" envDefault:"100"`
 }
 
 // ParseEnv parses the configuration from the environment. If it fails, it returns a wrapped error from the env package.

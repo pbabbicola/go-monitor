@@ -12,7 +12,7 @@ import (
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 
 	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/config"
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/consumers/log"
+	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/consumers/batcher"
 	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
 )
 
@@ -23,8 +23,8 @@ import (
 // the regexp on a per-URL basis. The monitored URLs can be anything found online. In case the
 // check fails the details of the failure should be logged into the database.
 
-func run(fileURL string) error {
-	cfg, err := config.Parse(fileURL)
+func run(envConfig *config.EnvConfig) error {
+	cfg, err := config.Parse(envConfig.FileURL)
 	if err != nil {
 		return fmt.Errorf("parsing configuration: %w", err)
 	}
@@ -43,6 +43,12 @@ func run(fileURL string) error {
 		cancel()
 	}()
 
+	batch, err := batcher.New(ctx, envConfig.BatchSize, envConfig.DatabaseURL)
+	if err != nil {
+		return fmt.Errorf("creating batcher: %w", err)
+	}
+	defer batch.Close(ctx)
+
 	client := cleanhttp.DefaultClient() // This sets sensible defaults for the client.
 	messageQueue := make(chan monitor.Message)
 
@@ -54,7 +60,7 @@ func run(fileURL string) error {
 	}
 
 	wg.Go(func() {
-		log.Consume(ctx, messageQueue)
+		batch.Consume(ctx, messageQueue)
 	})
 
 	wg.Wait()
@@ -70,8 +76,9 @@ func main() {
 
 	slog.SetLogLoggerLevel(envConfig.LogLevel)
 
-	err = run(envConfig.FileURL)
+	err = run(envConfig)
 	if err != nil {
+		slog.Error("Exiting program.", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
 }

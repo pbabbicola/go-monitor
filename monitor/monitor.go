@@ -29,7 +29,7 @@ func Ticks(ctx context.Context, website config.SiteElement, monitorer Monitorer)
 		case t := <-ticker.C:
 			err := monitorer(ctx, website)
 			if err != nil {
-				slog.ErrorContext(ctx, "Failed to monitor", slog.String("url", website.URL), slog.String("error", err.Error()))
+				slog.InfoContext(ctx, "Failed to monitor", slog.String("url", website.URL), slog.String("error", err.Error()))
 			}
 
 			slog.DebugContext(ctx, "Monitored", slog.String("url", website.URL), slog.Time("ticked_time", t))

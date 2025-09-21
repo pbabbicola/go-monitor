@@ -57,6 +57,8 @@ linters:
       enabled-checks:
         - importShadow
         - whyNoLint
+      disabled-checks:
+        - commentFormatting # clashes with whyNoLint
     gomoddirectives:
       replace-local: true
     govet:

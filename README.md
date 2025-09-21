@@ -1,5 +1,18 @@
 # Go Monitor
 
+## Database Schema
+
+| logs               |                        |
+|--------------------|-----------------------:|
+| **timestamp**      | timestamp [primary key]|
+| **url**            |  varchar [primary key] |
+| duration           |                 bigint |
+| status_code        |                integer |
+| regexp_matches     |                boolean |
+| error              |                varchar |
+
+There is probably a better way to do this, but to be honest I haven't done anything with anything more complicated than a key value store in about three years, so I've had to have a big refresher already.
+
 ## Sample Files
 
 ### sample-url-list.json

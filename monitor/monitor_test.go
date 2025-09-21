@@ -115,6 +115,7 @@ func TestDefaultMonitorer_Monitor(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// creates a fake server for our fake handler
 			fakeServer := httptest.NewServer(tt.fakeHandler)
 			defer fakeServer.Close()
 
@@ -130,11 +131,12 @@ func TestDefaultMonitorer_Monitor(t *testing.T) {
 			wg.Go(func() {
 				err := m.Monitor(ctx, tt.website)
 
-				cancel()
+				cancel() // cancels the context so the receiver knows to stop
 
 				assert.Truef(t, err != nil == tt.wantErr, "wanted err to be %v, but got error %v", tt.wantErr, err)
 			})
 
+			// Create a receiver/consumer similar to consumers/log, but instead of logging, this checks that we are being sent a the expected website log. Probably it could've done with a few more assert checks on other fields.
 			wg.Go(func() {
 				for {
 					select {
