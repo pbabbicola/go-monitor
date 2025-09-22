@@ -16,19 +16,7 @@ import (
 	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
 )
 
-// The website monitor should perform the checks periodically and collect the request timestamp,
-// the response time, the HTTP status code, as well as optionally checking the returned page
-// contents for a regex pattern that is expected to be found on the page. Each URL should be
-// checked periodically, with the ability to configure the interval (between 5 and 300 seconds) and
-// the regexp on a per-URL basis. The monitored URLs can be anything found online. In case the
-// check fails the details of the failure should be logged into the database.
-
 func run(envConfig *config.EnvConfig) error {
-	cfg, err := config.Parse(envConfig.FileURL)
-	if err != nil {
-		return fmt.Errorf("parsing configuration: %w", err)
-	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -43,13 +31,19 @@ func run(envConfig *config.EnvConfig) error {
 		cancel()
 	}()
 
+	client := cleanhttp.DefaultClient() // This sets sensible defaults for the client.
+
+	cfg, err := config.ParseRemote(ctx, client, envConfig.FileURL)
+	if err != nil {
+		return fmt.Errorf("parsing configuration: %w", err)
+	}
+
 	batch, err := batcher.New(ctx, envConfig.BatchSize, envConfig.DatabaseURL)
 	if err != nil {
 		return fmt.Errorf("creating batcher: %w", err)
 	}
 	defer batch.Close(ctx)
 
-	client := cleanhttp.DefaultClient() // This sets sensible defaults for the client.
 	messageQueue := make(chan monitor.Message)
 
 	var wg sync.WaitGroup

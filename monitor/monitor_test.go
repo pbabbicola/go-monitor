@@ -48,11 +48,11 @@ func TestTicks(t *testing.T) {
 			website: config.SiteElement{
 				URL:             "test-url",
 				Regexp:          nil,
-				IntervalSeconds: 1,
+				IntervalSeconds: 5,
 			},
 			monitorer:             NewMockedMonitorer(nil),
 			expectedAmountOfCalls: 5,
-			timeout:               5 * time.Second,
+			timeout:               25 * time.Second,
 		},
 		{
 			name: "test ticks that are cancelled before the monitoring has time to run",

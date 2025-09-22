@@ -1,9 +1,12 @@
 package config
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
+	"net/http"
 	"os"
 	"regexp"
 
@@ -12,6 +15,7 @@ import (
 
 // TODO: Add tests (running out of time) and use FileURL as an actual url.
 // EnvConfig keeps the configuration parsed from the environment by [ParseEnv].
+// This probably should be in a different package as the other config, but I am a bit short on time.
 type EnvConfig struct {
 	FileURL     string     `env:"FILE_URL" envDefault:"sample-big.json"`
 	LogLevel    slog.Level `env:"LOG_LEVEL" envDefault:"Debug"`
@@ -53,6 +57,35 @@ func Parse(filename string) ([]SiteElement, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unmarshaling file %v: %w", filename, err)
 	}
+
+	return siteConfiguration, nil
+}
+
+func ParseRemote(ctx context.Context, client *http.Client, url string) ([]SiteElement, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("performing request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading body: %w", err)
+	}
+
+	siteConfiguration := []SiteElement{}
+
+	err = json.Unmarshal(body, &siteConfiguration)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshaling file: %w", err)
+	}
+
+	slog.DebugContext(ctx, "Configuration successfully read.")
 
 	return siteConfiguration, nil
 }

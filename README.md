@@ -63,4 +63,4 @@ Simple sample list to enable you to test arbitrary urls. It's small, so you can 
 
 ### sample-big.json
 
-Partial dataset from [Kaggle](https://www.kaggle.com/datasets/bpali26/popular-websites-across-the-globe). Contains over 9000 rows: some repeated, some defunct. The monitor does not deduplicate or remove any data from configuration.
+Partial dataset from [Kaggle](https://www.kaggle.com/datasets/bpali26/popular-websites-across-the-globe). Contains over 9000 rows: some repeated, some defunct. The monitor does not deduplicate or remove any data from configuration. Due to the size, it's hosted on a [Github gist](https://gist.githubusercontent.com/pbabbicola/559e5fe3a844e298d70e33556e3c7fee/raw/0d5468c160e520a2589f1cd69303b106694d2c06/sample-big.json).

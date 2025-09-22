@@ -12,12 +12,42 @@ import (
 	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/config"
 )
 
+const minTimerSeconds = 5
+
+const maxTimerSeconds = 300
+
 // Monitorer is an interface that is used for passing to Ticks how we want to monitor a certain website.
 type Monitorer func(context.Context, config.SiteElement) error
+
+func adjustTimers(ctx context.Context, website config.SiteElement) config.SiteElement {
+	if website.IntervalSeconds < minTimerSeconds {
+		slog.InfoContext(
+			ctx,
+			"Interval too small. Will use 5 seconds.",
+			slog.String("url", website.URL),
+			slog.Int("interval", website.IntervalSeconds),
+		)
+		website.IntervalSeconds = minTimerSeconds
+	}
+
+	if website.IntervalSeconds > maxTimerSeconds {
+		slog.InfoContext(
+			ctx,
+			"Interval too big. Will use 300 seconds.",
+			slog.String("url", website.URL),
+			slog.Int("interval", website.IntervalSeconds),
+		)
+		website.IntervalSeconds = maxTimerSeconds
+	}
+
+	return website
+}
 
 // Ticks creates a ticker that controls the interval for a certain monitor, and will execute the monitorer when the time has passed.
 // Adapted from [time.NewTicker] example.
 func Ticks(ctx context.Context, website config.SiteElement, monitorer Monitorer) {
+	website = adjustTimers(ctx, website)
+
 	ticker := time.NewTicker(time.Duration(website.IntervalSeconds) * time.Second)
 	defer ticker.Stop()
 
@@ -29,7 +59,12 @@ func Ticks(ctx context.Context, website config.SiteElement, monitorer Monitorer)
 		case t := <-ticker.C:
 			err := monitorer(ctx, website)
 			if err != nil {
-				slog.InfoContext(ctx, "Failed to monitor", slog.String("url", website.URL), slog.String("error", err.Error()))
+				slog.InfoContext(
+					ctx,
+					"Failed to monitor",
+					slog.String("url", website.URL),
+					slog.String("error", err.Error()),
+				)
 			}
 
 			slog.DebugContext(ctx, "Monitored", slog.String("url", website.URL), slog.Time("ticked_time", t))
