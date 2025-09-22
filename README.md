@@ -2,8 +2,8 @@
 
 ## Known issues and other comments
 
-Sometimes, there is a goroutine hanging around when you terminate the program. I'm not sure if I'm impatient or it genuinely hangs around forever. I haven't had time to profile it in depth.
-
+Sometimes, there is a goroutine hanging around when you terminate the program. I haven't had time to profile it in depth. I'm pretty sure it's because I used a "fire and forget" go routine for the database writes, but I should have used another producer - consumer for the writes.
+ 
 I didn't add any metrics. I swear I know how to do Prometheus metrics at least, I maintained the metrics library at Ecosia.
 
 The dockerfile is a bit clunky but it should do the job.
