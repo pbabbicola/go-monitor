@@ -11,9 +11,9 @@ import (
 
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/config"
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/consumers/batcher"
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
+	"github.com/pbabbicola/go-monitor/config"
+	"github.com/pbabbicola/go-monitor/consumers/batcher"
+	"github.com/pbabbicola/go-monitor/monitor"
 )
 
 func run(envConfig *config.EnvConfig) error {

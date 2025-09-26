@@ -158,4 +158,4 @@ formatters:
   settings:
     gofumpt:
       extra-rules: true
-      module-path: "github.com/[REDACTED]-recruiting/go-20250912-pbabbicola"
+      module-path: "github.com/pbabbicola/go-monitor"

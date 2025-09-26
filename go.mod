@@ -1,4 +1,4 @@
-module github.com/[REDACTED]-recruiting/go-20250912-pbabbicola
+module github.com/pbabbicola/go-monitor
 
 go 1.25.1
 

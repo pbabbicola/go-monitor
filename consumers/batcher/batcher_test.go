@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
+	"github.com/pbabbicola/go-monitor/monitor"
 )
 
 // This test doesn't need to be a table test, but I find them more readable even if they have one element. I tried doing a non-table test somewhere else in this project but I didn't quite like it.

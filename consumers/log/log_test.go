@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/consumers/log"
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
+	"github.com/pbabbicola/go-monitor/consumers/log"
+	"github.com/pbabbicola/go-monitor/monitor"
 )
 
 func TestConsume(t *testing.T) {

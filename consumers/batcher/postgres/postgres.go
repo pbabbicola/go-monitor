@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/lib/pq" // postgres driver
 
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
+	"github.com/pbabbicola/go-monitor/monitor"
 )
 
 // In a world in which I had more time I would make this maybe nice optional parameters... like:

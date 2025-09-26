@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
+	"github.com/pbabbicola/go-monitor/monitor"
 )
 
 func Consume(ctx context.Context, messageQueue chan monitor.Message) {

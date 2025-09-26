@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/config"
+	"github.com/pbabbicola/go-monitor/config"
 )
 
 const minTimerSeconds = 5

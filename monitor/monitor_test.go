@@ -11,8 +11,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/config"
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
+	"github.com/pbabbicola/go-monitor/config"
+	"github.com/pbabbicola/go-monitor/monitor"
 )
 
 type mockedMonitorer struct {

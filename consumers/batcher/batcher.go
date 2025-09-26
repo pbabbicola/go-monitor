@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/consumers/batcher/postgres"
-	"github.com/[REDACTED]-recruiting/go-20250912-pbabbicola/monitor"
+	"github.com/pbabbicola/go-monitor/consumers/batcher/postgres"
+	"github.com/pbabbicola/go-monitor/monitor"
 )
 
 type WriteOrLog func(ctx context.Context, pool *sql.DB, batch []monitor.Message)
