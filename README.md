@@ -3,12 +3,8 @@
 ## Known issues and other comments
 
 Sometimes, there is a goroutine hanging around when you terminate the program. I haven't had time to profile it in depth. I'm pretty sure it's because I used a "fire and forget" go routine for the database writes, but I should have used another producer - consumer for the writes.
- 
-I didn't add any metrics. I swear I know how to do Prometheus metrics at least, I maintained the metrics library at Ecosia.
 
 The dockerfile is a bit clunky but it should do the job.
-
-I have had a lot less time than I expected unfortunately due to sickness and other matters, but I feel like I've spent enough time on this task.
 
 You can potentially change the log output to use json, to make easier to parse.
 
