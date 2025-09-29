@@ -1,8 +1,14 @@
 # Go Monitor
 
+## Disclaimer
+
+This is a code homework I got from some company.
+
 ## Known issues and other comments
 
-Sometimes, there is a goroutine hanging around when you terminate the program. I haven't had time to profile it in depth. I'm pretty sure it's because I used a "fire and forget" go routine for the database writes, but I should have used another producer - consumer for the writes.
+Sometimes, there is a goroutine hanging around when you terminate the program. I haven't had time to profile it in depth. I'm pretty sure it's because I used a "fire and forget" go routine for the database writes, but I should have used another producer - consumer for the writes. That's a to-do.
+
+You can batch the json to read it. It should be sufficient for now though.
 
 The dockerfile is a bit clunky but it should do the job.
 
