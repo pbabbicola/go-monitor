@@ -21,7 +21,23 @@ import (
 // 	connMaxLifetime *time.Duration
 // }
 // func NewClient(databaseURL string, options ...Option) (*sql.DB, error) {
-// Maybe batcher and postgres would even be two subpackages.
+
+
+type Postgres struct {
+	pool *sql.DB
+}
+
+// NewConsumer creates a Postgres consumer that satisfies the implicit Consumer interface.
+func NewConsumer(ctx context.Context, databaseURL string) (*Postgres, error) {
+	pool, err := NewConnection(ctx, databaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("establishing new connection: %w", err)
+	}
+
+	return &Postgres{
+		pool: pool,
+	}, nil
+}
 
 // NewConnection creates a *sql.DB with default options.
 func NewConnection(ctx context.Context, databaseURL string) (*sql.DB, error) {
@@ -42,19 +58,34 @@ func NewConnection(ctx context.Context, databaseURL string) (*sql.DB, error) {
 	return db, nil
 }
 
-const insertQuery = "insert into logs (ts, url, duration_milliseconds, status_code, regexp_matches, error) values($1, $2, $3, $4, $5, $6)"
-
-// WriteOrLog is a wrapper for writeToPostgres, where it just logs an error in slog if it fails writing a batch.
-func WriteOrLog(ctx context.Context, pool *sql.DB, batch []monitor.Message) {
-	err := writeToPostgres(ctx, pool, batch)
+// Close closes the database pool and logs an error to slog if there is any problem.
+func (p *Postgres) Close(ctx context.Context) {
+	err := p.pool.Close()
 	if err != nil {
-		slog.ErrorContext(
-			ctx,
-			"Failed writing to Postgres.",
-			slog.String("error", fmt.Sprintf("%s", err)),
-		)
+		slog.ErrorContext(ctx, "Failed closing the database connection.", slog.String("error", fmt.Sprintf("%s", err)))
 	}
 }
+
+// Consume consumes the batch queue of monitor.Message and writes them to postgres. It just logs an error in slog if it fails writing a batch.
+func (p *Postgres) Consume(ctx context.Context, batchQueue chan []monitor.Message) {
+	for {
+		select {
+		case <-ctx.Done(): // ignore the non-written messages, but you could write them here if you want to ignore the context cancellation
+			return
+		case batch := <-batchQueue:
+			err := writeToPostgres(ctx, p.pool, batch)
+			if err != nil {
+				slog.ErrorContext(
+					ctx,
+					"Failed writing to Postgres.",
+					slog.String("error", fmt.Sprintf("%s", err)),
+				)
+			}
+		}
+	}
+}
+
+const insertQuery = "insert into logs (ts, url, duration_milliseconds, status_code, regexp_matches, error) values($1, $2, $3, $4, $5, $6)"
 
 // writeToPostgres writes a batch of inserts in a transaction.
 func writeToPostgres(ctx context.Context, pool *sql.DB, batch []monitor.Message) error {
