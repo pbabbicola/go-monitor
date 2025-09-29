@@ -45,7 +45,7 @@ func run(envConfig *config.EnvConfig) error {
 	}
 	defer pool.Close(ctx)
 
-	batchQueue := make(chan []monitor.Message)
+	batchQueue := make(chan []monitor.Message, len(cfg)) // buffer in case that someone is waiting to send while the context cancellation happens. overkill? maybe. better ways? most likely
 
 	batch, err := batcher.New(ctx, envConfig.BatchSize, batchQueue)
 	if err != nil {

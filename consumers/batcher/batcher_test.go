@@ -185,6 +185,7 @@ func TestBatcher_Consume_CancelBefore(t *testing.T) {
 		mut:        &sync.Mutex{},
 		batch:      []monitor.Message{},
 		batchSize:  6,
+		batchQueue: make(chan []monitor.Message, 1),
 	}
 
 	// this is a fake producer
@@ -204,6 +205,7 @@ func TestBatcher_Consume_CancelBefore(t *testing.T) {
 			case <-ctx.Done():
 				return
 			case batch := <-batcher.batchQueue:
+
 				writeResult = batch // store the result of the write
 
 				return
