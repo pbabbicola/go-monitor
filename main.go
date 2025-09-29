@@ -13,6 +13,7 @@ import (
 
 	"github.com/pbabbicola/go-monitor/config"
 	"github.com/pbabbicola/go-monitor/consumers/batcher"
+	"github.com/pbabbicola/go-monitor/consumers/postgres"
 	"github.com/pbabbicola/go-monitor/monitor"
 )
 
@@ -38,11 +39,18 @@ func run(envConfig *config.EnvConfig) error {
 		return fmt.Errorf("parsing configuration: %w", err)
 	}
 
-	batch, err := batcher.New(ctx, envConfig.BatchSize, envConfig.DatabaseURL)
+	pool, err := postgres.NewConsumer(ctx, envConfig.DatabaseURL)
+	if err != nil {
+		return fmt.Errorf("creating postgres consumer: %w", err)
+	}
+	defer pool.Close(ctx)
+
+	batchQueue := make(chan []monitor.Message, len(cfg)) // buffer in case that someone is waiting to send while the context cancellation happens. overkill? maybe. better ways? most likely
+
+	batch, err := batcher.New(ctx, envConfig.BatchSize, batchQueue)
 	if err != nil {
 		return fmt.Errorf("creating batcher: %w", err)
 	}
-	defer batch.Close(ctx)
 
 	messageQueue := make(chan monitor.Message)
 
@@ -55,6 +63,10 @@ func run(envConfig *config.EnvConfig) error {
 
 	wg.Go(func() {
 		batch.Consume(ctx, messageQueue)
+	})
+
+	wg.Go(func() {
+		pool.Consume(ctx, batchQueue)
 	})
 
 	wg.Wait()

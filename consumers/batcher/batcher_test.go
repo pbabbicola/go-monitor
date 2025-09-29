@@ -2,11 +2,11 @@ package batcher
 
 import (
 	"context"
-	"database/sql"
 	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/goleak"
 
 	"github.com/pbabbicola/go-monitor/monitor"
 )
@@ -122,18 +122,11 @@ func TestBatcher_Consume_HappyPath(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	fakeWriteOrLog := func() WriteOrLog {
-		return func(_ context.Context, _ *sql.DB, batch []monitor.Message) {
-			assert.ElementsMatch(t, batch, expectedMessages)
-			wg.Done()
-		}
-	}
-
 	batcher := &Batcher{
 		mut:        &sync.Mutex{},
 		batch:      []monitor.Message{},
 		batchSize:  6,
-		writeOrLog: fakeWriteOrLog(),
+		batchQueue: make(chan []monitor.Message),
 	}
 
 	// this is a fake producer
@@ -149,7 +142,19 @@ func TestBatcher_Consume_HappyPath(t *testing.T) {
 		}()
 	}
 
-	wg.Add(1) // fakeWriteOrLog should happen only once, when the 6 elements are there.
+	// This is a fake receiver for the batch queue
+	wg.Go(func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case batch := <-batcher.batchQueue:
+				assert.ElementsMatch(t, batch, expectedMessages)
+			
+				return
+			}
+		}
+	})
 
 	go batcher.Consume(ctx, messageQueue)
 
@@ -175,17 +180,12 @@ func TestBatcher_Consume_CancelBefore(t *testing.T) {
 
 	var writeResult []monitor.Message
 
-	fakeWriteOrLog := func() WriteOrLog {
-		return func(_ context.Context, _ *sql.DB, batch []monitor.Message) {
-			writeResult = batch // store the result of the write
-		}
-	}
 
 	batcher := &Batcher{
 		mut:        &sync.Mutex{},
 		batch:      []monitor.Message{},
 		batchSize:  6,
-		writeOrLog: fakeWriteOrLog(),
+		batchQueue: make(chan []monitor.Message, 1),
 	}
 
 	// this is a fake producer
@@ -197,10 +197,30 @@ func TestBatcher_Consume_CancelBefore(t *testing.T) {
 		})
 	}
 
+
+	// This is a fake receiver for the batch queue
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case batch := <-batcher.batchQueue:
+
+				writeResult = batch // store the result of the write
+
+				return
+			}
+		}
+	}()
+
 	go batcher.Consume(ctx, messageQueue)
 
 	wg.Wait() // wait for everything to finish
 	cancel()
 
 	assert.Empty(t, writeResult)
+}
+
+func TestMain(m *testing.M) {
+	goleak.VerifyTestMain(m)
 }
